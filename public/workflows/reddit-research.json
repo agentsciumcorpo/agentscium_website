@@ -1,0 +1,941 @@
+{
+  "name": "Reddit_Research",
+  "nodes": [
+    {
+      "parameters": {},
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1072,
+        64
+      ],
+      "id": "6f60f0f2-04d5-4088-be60-672e13b1dbd7",
+      "name": "When clicking ‘Execute workflow’"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=# POST À ANALYSER\n\n**Titre :** {{$json.titre}}\n\n**Contenu :** {{$json.contenu}}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Tu es un expert en classification de posts Reddit.\n\nTa tâche est d'analyser un post du subreddit r/personalfinance que je te donne et tu dois dire si ce post a un rapport avec le sujet de l'investissement et la gestion de patrimoine.\n\nCela pourrait inclure des sujets comme :\n\n- Où investir son argent\n- Planification de la retraite (401k, IRA, pension)\n- Stratégies d'épargne\n- Héritage et planification successorale\n- Optimisation fiscale\n- Allocation d'actifs et diversification\n- Investissement immobilier ou en bourse\n- Conseillers financiers et gestion de patrimoine\n- Fonds d'urgence et sécurité financière\n- Gestion de portefeuille\n\n---\n\n## FORMAT D'OUTPUT OBLIGATOIRE\n\nTu dois répondre avec le format JSON suivant. C'est une OBLIGATION\n\n{\n  \"opportunite\":\"oui\",\n  \"explication\":\"Raison en une phrase\"\n}\n\n\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -128,
+        48
+      ],
+      "id": "d979f6f8-bec9-4580-8ac6-73a756f436a7",
+      "name": "Préfiltre IA"
+    },
+    {
+      "parameters": {
+        "content": "## Scraping des posts d'un subreddit\n\nOn vient utiliser un HTTP request car l'API de Reddit ne fonctionne pas, où est payante.\n\nEnsuite on vient mapper ces informations",
+        "height": 304,
+        "width": 416,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -896,
+        -96
+      ],
+      "typeVersion": 1,
+      "id": "10ccccaa-9ad0-47cc-a2a1-de0505a2a7e3",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "## Filtre horaire\nOn enlève tout les post qui sont présent 2h après",
+        "height": 288
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -480,
+        -80
+      ],
+      "typeVersion": 1,
+      "id": "5a46e3f0-0109-408c-9f19-887ad8d66030",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Préfiltre IA \nCe filtre à pour but de faire consommer moins de token.\n\nOn vient supprimer les posts que l'on considère inutile",
+        "height": 320
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -144,
+        -112
+      ],
+      "typeVersion": 1,
+      "id": "b6556ef0-b6a0-4be6-9152-0474193aef87",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "url": "https://www.reddit.com/r/personalfinance/new.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "n8n-reddit-scraper/1.0"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        -848,
+        64
+      ],
+      "id": "8c3eadba-1b9f-493d-a392-9ea17f2a6d6a",
+      "name": "Lecture_subreddit"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Version avec debug\nconst item = $input.first().json;\n\n// Si le JSON est directement un tableau\nconst redditData = Array.isArray(item) ? item : [item];\n\n// Extraire les posts\nconst posts = redditData[0].data.children;\n\nreturn posts.map(post => {\n  const data = post.data;\n  const date = new Date(data.created_utc * 1000);\n  \n  return {\n    json: {\n      titre: data.title,\n      contenu: data.selftext,\n      auteur: data.author,\n      date: date.toISOString(),\n      date_lisible: date.toLocaleString('fr-FR'),\n      lien: `https://www.reddit.com${data.permalink}`,\n      id: data.id\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -624,
+        64
+      ],
+      "id": "37eb1646-790e-437c-9f64-402604acc9ec",
+      "name": "Récupération des post"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "6861109a-94af-4254-ae20-14d3b3a39c45",
+              "leftValue": "={{ $json.date }}",
+              "rightValue": "={{ $now.minus({hours: 2}).toISO() }}",
+              "operator": {
+                "type": "dateTime",
+                "operation": "after"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        -400,
+        64
+      ],
+      "id": "6dd444ef-009a-4214-8a10-d1fa44a47bf4",
+      "name": "Filtre horaire"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        80,
+        560
+      ],
+      "id": "5fe127dd-64f2-4ef9-a735-532dc7d467e3",
+      "name": "Loop Over Items1"
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-large",
+        "options": {
+          "dimensions": 1024
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        336,
+        688
+      ],
+      "id": "d37051a0-77e9-4c48-95f1-fe1e1aa07ce3",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "SmWCIbgZskUwO0Ib",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "41f55ee3-6e8d-403d-a1da-dc9328719304",
+              "name": "Titre_post",
+              "value": "={{ $('Récupération des post').item.json.titre }}",
+              "type": "string"
+            },
+            {
+              "id": "82e1bc9b-bbe0-4176-a428-345252ba29bb",
+              "name": "Contenu_post",
+              "value": "={{ $('Récupération des post').item.json.contenu }}",
+              "type": "string"
+            },
+            {
+              "id": "d08144f1-2f4b-46ab-98c4-96f3e29b89c4",
+              "name": "Titre_exemple",
+              "value": "={{ $json.document.metadata.Titre }}",
+              "type": "string"
+            },
+            {
+              "id": "a91b0cd3-f8b5-47fe-bb81-094f93a4633f",
+              "name": "Contenu_exemple",
+              "value": "={{ $json.document.metadata.Contenu }}",
+              "type": "string"
+            },
+            {
+              "id": "5861c0b7-3c8b-4d25-b845-ad95dae42c72",
+              "name": "Explication",
+              "value": "={{ $json.document.metadata.Explication }}",
+              "type": "string"
+            },
+            {
+              "id": "ba7c37bc-4f4f-4035-b8af-7cb36f6af587",
+              "name": "À répondre",
+              "value": "={{ $json.document.metadata['À répondre'] }}",
+              "type": "string"
+            },
+            {
+              "id": "9f53cb18-a588-4e4a-bb03-3f2cbc6185b6",
+              "name": "Score",
+              "value": "={{ $json.score }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        992,
+        592
+      ],
+      "id": "e3083ce4-3ac5-4efb-905c-25ef3b002113",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "mode": "load",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "prompt": "=Titre : {{ $('Récupération des post').item.json.titre }}\n\nContenu : {{ $('Récupération des post').item.json.contenu }}",
+        "topK": 50,
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        480,
+        592
+      ],
+      "id": "46d6030b-2148-444d-b00c-e1e75a5ef206",
+      "name": "Comparaison avec exemple existant",
+      "credentials": {
+        "supabaseApi": {
+          "id": "DmFHNwkmDaE6KtAt",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const TOP_EXAMPLE_COUNT = 4;\n\n// Récupérer tous les résultats\nconst resultats = $input.all();\n\n// Séparer et trier les exemples\nconst bonsExemples = resultats\n  .filter(item => item.json['À répondre'] === 'Oui')\n  .sort((a, b) => b.json.Score - a.json.Score)\n  .slice(0, TOP_EXAMPLE_COUNT);\n\nconst mauvaisExemples = resultats\n  .filter(item => item.json['À répondre'] === 'Non')\n  .sort((a, b) => b.json.Score - a.json.Score)\n  .slice(0, TOP_EXAMPLE_COUNT);\n\n// Fonction pour alterner les tableaux\nfunction interleaveArrays(arr1, arr2) {\n  const result = [];\n  const maxLength = Math.max(arr1.length, arr2.length);\n  for (let i = 0; i < maxLength; i++) {\n    if (i < arr1.length) result.push(arr1[i]);\n    if (i < arr2.length) result.push(arr2[i]);\n  }\n  return result;\n}\n\n// Alterner YES et NO\nconst exemplesAlternes = interleaveArrays(bonsExemples, mauvaisExemples)\n  .slice(0, Math.min(TOP_EXAMPLE_COUNT, resultats.length));\n\n// Formater pour le prompt\nconst exemplesFormattes = exemplesAlternes.map((ex, i) => {\n  const type = ex.json['À répondre'] === 'Oui' ? 'YES' : 'NO';\n  return `\n## Exemple ${type} (Similarité: ${(ex.json.Score * 100).toFixed(1)}%)\n\n**Titre:** ${ex.json.Titre_exemple}\n**Contenu:** ${ex.json.Contenu_exemple}\n**Raison:** ${ex.json.Explication}\n`;\n}).join('\\n');\n\n// Retourner\nreturn [{\n  json: {\n    titre: resultats[0].json.Titre_post,\n    contenu: resultats[0].json.Contenu_post,\n    exemples: exemplesFormattes\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1216,
+        592
+      ],
+      "id": "58429525-f8fe-43d2-8165-e8bdcd5079c8",
+      "name": "Code in JavaScript"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "af5b47f1-8b6c-43bb-a224-c084746493b4",
+              "leftValue": "={{ $json.opportunite }}",
+              "rightValue": "oui",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        1376,
+        304
+      ],
+      "id": "fff0f4f9-0984-40fb-b357-d88c9f99c991",
+      "name": "Filter"
+    },
+    {
+      "parameters": {
+        "sendTo": "agentscium@gmail.com",
+        "subject": "Liste post",
+        "message": "=Voilà des post Reddit qui pourrait t'intéresser :\n\n{{ $('Récupération des post').item.json.titre }}\n\n{{ $('Récupération des post').item.json.lien }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1616,
+        304
+      ],
+      "id": "f2a84260-868c-425e-8eeb-84784d118188",
+      "name": "Send a message",
+      "webhookId": "5c0f4d84-6466-4d4a-a8fe-ce43a9f2bd0b",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "zJCtaom929jAgnAS",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "bc3136d7-9949-4cd3-ad67-fbbb54efb4d5",
+              "leftValue": "={{ $json.opportunite }}",
+              "rightValue": "oui",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.filter",
+      "typeVersion": 2.2,
+      "position": [
+        496,
+        48
+      ],
+      "id": "01dd0f29-aa7c-485d-91c6-78608348f934",
+      "name": "Filter1"
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_schema",
+              "schema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"opportunite\": {\n      \"type\": \"string\",\n      \"enum\": [\"oui\", \"non\"]\n    },\n    \"explication\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\"opportunite\", \"explication\"],\n  \"additionalProperties\": false\n}"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        -176,
+        304
+      ],
+      "id": "4b426e72-5922-4bd2-8170-772c411f025b",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "SmWCIbgZskUwO0Ib",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "builtInTools": {},
+        "options": {
+          "textFormat": {
+            "textOptions": {
+              "type": "json_schema",
+              "schema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"opportunite\": {\n      \"type\": \"string\",\n      \"enum\": [\"oui\", \"non\"]\n    },\n    \"explication\": {\n      \"type\": \"string\"\n    }\n  },\n  \"required\": [\"opportunite\", \"explication\"],\n  \"additionalProperties\": false\n}"
+            }
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.3,
+      "position": [
+        784,
+        464
+      ],
+      "id": "87782c86-6d65-484d-873f-c94c21602efe",
+      "name": "OpenAI Chat Model1",
+      "credentials": {
+        "openAiApi": {
+          "id": "SmWCIbgZskUwO0Ib",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Analyse le contenu du post reddit dont les informations sont :\n\nTitre : {{ $('Code in JavaScript').item.json.titre }}\nContenu : {{ $('Code in JavaScript').item.json.contenu }}\n\nQuelques exemples :\n\n{{ $json.exemples }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=Tu es un expert en analyse de posts Reddit pour identifier des opportunités commerciales.\n\n# CONTEXTE\nJe suis un conseiller en investissement indépendant spécialisé dans :\n- Conseil en placements financiers (assurance vie, PEA, immobilier)\n- Planification retraite et optimisation fiscale\n- Gestion de patrimoine et diversification\n- Accompagnement personnalisé (à partir de 10 000€)\n\n# PROFILS CIBLES : \nJe recherche des personnes qui :\nOnt de l'épargne sans stratégie claire (> 10 000€)\n\n- Ont reçu un héritage ou capital à placer\n- Préparent activement leur retraite\n- Cherchent à optimiser leur fiscalité\n- Veulent diversifier leurs investissements\n- Ont des questions sur succession/transmission\n\n---\n\n# PROFILS À ÉVITER\n- Personnes endettées ou en difficulté financière\n- Budgets < 10 000€\n- Questions purement techniques (code, logiciels)\n- Déjà satisfaits de leur conseiller actuel\n- Sujets sans lien avec l'investissement\n\n---\n\n# FORMAT DE RÉPONSE OBLIGATOIRE\n\nTu dois TOUJOURS répondre avec ce format JSON exact (aucun texte avant ou après) :\n\n{\"Opportunitée\":\"oui\",\n\"explanation\":\"Raison en une phrase\"\n}\n\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        832,
+        320
+      ],
+      "id": "9cccd2ee-4bfe-4650-9adb-da08024a0705",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Récupérer TOUS les items\nconst items = $input.all();\n\n// Traiter chaque item\nreturn items.map(item => {\n  // Récupérer le texte\n  let text = item.json.text || item.json.response || JSON.stringify(item.json);\n  \n  // Nettoyer\n  text = text.replace(/\\\\n/g, '').trim();\n  \n  // Parser\n  try {\n    const parsed = JSON.parse(text);\n    \n    return {\n      json: {\n        opportunite: parsed.opportunite,\n        explication: parsed.explication\n      }\n    };\n    \n  } catch (error) {\n    console.error('Erreur parsing item:', error);\n    \n    return {\n      json: {\n        opportunite: \"non\",\n        explication: \"Erreur parsing\"\n      }\n    };\n  }\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        272,
+        48
+      ],
+      "id": "fdfa4ba8-9584-43e6-b2f6-451cff53b3a3",
+      "name": "Code in JavaScript1"
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\n\nreturn items.map((item, index) => {\n  // Récupérer le texte à parser\n  let text = item.json.text || item.json.response || JSON.stringify(item.json);\n  \n  // Nettoyer\n  text = text.replace(/\\\\n/g, '').trim();\n  \n  // Parser\n  let opportunite = \"non\";\n  let explication = \"Erreur parsing\";\n  \n  try {\n    const parsed = JSON.parse(text);\n    opportunite = parsed.opportunite;\n    explication = parsed.explication;\n  } catch (error) {\n    console.error('Erreur parsing item:', error);\n  }\n  \n  // IMPORTANT : Garder les données originales\n  return {\n    json: {\n      opportunite: opportunite,\n      explication: explication,\n      titre: item.json.titre,        // ← GARDE ça\n      contenu: item.json.contenu,    // ← GARDE ça\n      lien: item.json.lien           // ← GARDE ça\n    }\n  };\n});"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        320
+      ],
+      "id": "eca208a7-957a-4f5f-826a-1048bb92b0c3",
+      "name": "Code in JavaScript2"
+    },
+    {
+      "parameters": {
+        "content": "## RAG\nIci on vient comparer les post à des exemples situés dans une base de donnée Supabase.\n\nCela permet d'alimenté d'exemples notre modèle LLM derrière.",
+        "height": 304
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        64,
+        368
+      ],
+      "typeVersion": 1,
+      "id": "0e72ac41-2c91-42d5-b343-fc91087954c9",
+      "name": "Sticky Note3"
+    }
+  ],
+  "pinData": {
+    "Préfiltre IA": [
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post concerne le contrôle des finances personnelles, étape clé dans la gestion de patrimoine et la planification financière.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post traite de la gestion d'un prêt versus investissement, en analysant des stratégies d'investissement à long terme et le dollar cost averaging dans le contexte de fluctuations de marché, ce qui est directement lié à la gestion de patrimoine et à l'investissement.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post porte sur la gestion d'un compte Roth IRA hérité et les règles de retrait minimal obligatoire, ce qui relève clairement de la gestion de patrimoine et de la planification financière.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post demande des recommandations de livres sur la finance et l'investissement, ce qui relève directement du domaine de l'investissement et de la gestion de patrimoine.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post discute d'une stratégie d'arbitrage financier impliquant des transferts de solde de carte de crédit pour optimiser les placements et la gestion de la dette, ce qui concerne directement la gestion de patrimoine et les investissements.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post discute de choix d'investissement entre différents fonds indiciels et de la meilleure façon de commencer à investir, ce qui est directement lié à la gestion de patrimoine.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"Le post concerne un problème de surpaiement d'assurance chômage et des difficultés financières personnelles, sans lien direct avec l'investissement ou la gestion de patrimoine.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post traite de ce qu'il faut faire avec un ancien 401k suite à un changement d'emploi, un sujet central en gestion de patrimoine et planification de retraite.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post concerne l'amélioration du score de crédit, ce qui est un aspect clé de la gestion financière et impacte la capacité d'investissement et d'emprunt.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\n  \"opportunite\": \"non\",\n  \"explication\": \"Le post porte principalement sur le refinancement de prêts auto et la consolidation de dettes, sans mention directe d'investissement ou gestion de patrimoine.\"\n}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\n  \"opportunite\": \"oui\",\n  \"explication\": \"Le post traite de la création d'un compte d'épargne générant des intérêts, ce qui relève de la gestion de patrimoine et des stratégies d'épargne.\"\n}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"Le post concerne la gestion des dépenses personnelles via un outil de suivi financier, mais ne traite pas directement d'investissement ou de gestion de patrimoine.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post concerne la gestion de dettes et la recherche de conseils financiers, ce qui est lié à la gestion de patrimoine et la sécurité financière.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post concerne la construction du crédit, ce qui est important pour la gestion financière personnelle et les options d'investissement futures.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\n  \"opportunite\": \"non\",\n  \"explication\": \"Le post concerne une décision de réparation ou revente d'une voiture, ce qui ne relève pas de l'investissement ou de la gestion de patrimoine.\"\n}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post traite de la conversion d'un 401k en Roth IRA, une décision clé en gestion de patrimoine et investissement, ainsi que de la planification successorale et conseils pour faire croître ce compte.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post porte sur la recherche de conseils pour débuter en investissement et faire croître ses économies, ce qui relève bien de la gestion de patrimoine.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post discute de la gestion de comptes d'investissement, des frais associés, et de la transition vers un investissement en fonds indiciels, ce qui concerne clairement les sujets d'investissement et de gestion de patrimoine.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post traite de la planification fiscale liée à la conversion Roth IRA, un sujet clé d'investissement et gestion de patrimoine.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post traite des stratégies de financement pour l'achat d'une maison, incluant la gestion du budget, l'allocation des fonds et le risque financier, ce qui relève de la gestion de patrimoine et de l'investissement immobilier.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"Le post concerne la planification du budget personnel pour déménager, pas directement l'investissement ou la gestion de patrimoine.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\n  \"opportunite\": \"oui\",\n  \"explication\": \"Le post concerne la consolidation de prêts privés, une forme de gestion de dette liée à la planification financière personnelle et la gestion de patrimoine.\"\n}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post traite des contributions à un Roth IRA, un sujet clé en matière d'investissement et de gestion de patrimoine, notamment la planification fiscale et la stratégie d'épargne retraite.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post traite de la gestion de dettes de carte de crédit élevées, de stratégies pour rembourser ces dettes et d'optimisation des dépenses, qui sont des aspects clés de la gestion financière et de patrimoine.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post aborde la gestion de la dette et l'amélioration du score de crédit, ce qui concerne la gestion financière personnelle et la planification pour la santé financière future.\"}"
+        }
+      }
+    ],
+    "Basic LLM Chain": [
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"La demande porte uniquement sur un outil simple pour le suivi des finances personnelles sans mention d'investissement ni besoin de conseil en placement.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post montre une réflexion claire sur gestion d'un capital important (15k) avec des objectifs d'investissement et de remboursement de dettes, correspondant à un profil à la recherche d'orientation financière et d'optimisation pour un horizon long terme, ce qui cadre avec votre cible.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"Le post pose une question spécifique sur la réglementation des Roth IRA hérités mais ne montre pas de besoin clair d'accompagnement en investissement ou gestion patrimoniale liée à un capital à placer ou une stratégie d'investissement.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"Le post concerne uniquement une demande de recommandations de livres sur la finance sans indication claire d'une épargne à placer ou d'un besoin concret d'accompagnement en investissement.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post révèle une réflexion active sur la gestion d'un capital disponible (~12 000 $) avec une recherche d'optimisation du taux d'intérêt via l'arbitrage de taux de carte crédit, ce qui correspond à un profil ayant une épargne supérieure à 10 000 € et une volonté claire d'optimisation financière.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"Le post concerne un jeune investisseur de 16 ans qui demande des conseils sur des fonds indiciels, mais son capital et âge ne correspondent pas à la cible minimale de 10 000€ pour un accompagnement d'investissement.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post concerne la gestion d'un capital 401k de plus de 10 000 $ avec une recherche d'options pour le placement, correspondant à un profil ayant de l'épargne sans stratégie claire nécessitant un conseil personnalisé.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"Le post concerne l'amélioration du score de crédit d'un utilisateur récent en cartes de crédit, sans indication d'épargne disponible ou d'objectif d'investissement conforme aux profils ciblés.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post montre un fort besoin de conseil pour démarrer un placement pour un enfant, probablement avec un capital initial à investir, ce qui correspond à un profil ayant de l'épargne sans stratégie claire et un intérêt pour un investissement à long terme.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"Le post concerne une personne en difficulté avec des dettes de carte de crédit élevée et qui ne peut pas se permettre de rembourser, ce qui ne correspond pas au profil recherché d'épargnants disposant d'au moins 10 000€ à investir avec une stratégie claire.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"Le post concerne la construction de crédit aux États-Unis suite à un déménagement, sans mention d'une épargne importante ou d'un besoin d'accompagnement financier pour investissement ou optimisation fiscale.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"Le post montre une personne en difficulté financière (perte d'emploi et dette importante), ce qui ne correspond pas au profil cible avec une épargne stable à investir (>10 000€) et une situation financière saine.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le profil a une épargne significative (23k) sans dette et souhaite apprendre à investir pour construire une base financière solide, ce qui correspond parfaitement à un client cherchant un accompagnement personnalisé pour gérer et optimiser ses placements.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"L'utilisateur dispose d'une épargne conséquente (65k$) sans stratégie claire, s'interroge sur l'optimisation de ses placements et montre un fort intérêt pour une gestion plus autonome, ce qui correspond parfaitement à un profil cherchant conseil en investissement et diversification.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post exprime une volonté claire de réaliser une conversion Roth IRA afin d'optimiser la fiscalité, correspondant à un profil senior en phase de planification retraite et gestion patrimoniale, ce qui est pertinent pour un conseiller en investissement.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post montre un couple avec une épargne importante (>400k€ au total) cherchant une stratégie de financement optimisée pour un projet immobilier avec rénovation, indiquant un besoin potentiel de conseil en investissement et gestion de patrimoine.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"La personne est en situation de surendettement avec un budget insuffisant pour investir et cherche principalement à consolider des dettes existantes, ce qui ne correspond pas aux profils cibles à conseiller en investissement.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"oui\",\"explication\":\"Le post indique un compte de courtage avec environ 20 000$ en cash, une volonté claire de commencer à utiliser un Roth IRA pour optimiser la fiscalité et une bonne compréhension des règles, ce qui correspond au profil recherché d'une personne avec épargne à investir et besoin de conseils personnalisés.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"Le profil est en situation de surendettement important avec un faible revenu disponible, ce qui ne correspond pas à une clientèle présentant un potentiel d'investissement ou de placement financier, mais plutôt un besoin d'accompagnement pour sortir de difficultés financières.\"}"
+        }
+      },
+      {
+        "json": {
+          "text": "{\"opportunite\":\"non\",\"explication\":\"Le post concerne une personne cherchant à gérer des dettes de carte de crédit avec des remboursements échelonnés, sans mention d'épargne ou d'investissement à partir de 10 000 €, ce qui ne correspond pas au profil ciblé pour un conseil en investissement.\"}"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "When clicking ‘Execute workflow’": {
+      "main": [
+        [
+          {
+            "node": "Lecture_subreddit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Préfiltre IA": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Lecture_subreddit": {
+      "main": [
+        [
+          {
+            "node": "Récupération des post",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Récupération des post": {
+      "main": [
+        [
+          {
+            "node": "Filtre horaire",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filtre horaire": {
+      "main": [
+        [
+          {
+            "node": "Préfiltre IA",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Comparaison avec exemple existant",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Comparaison avec exemple existant",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comparaison avec exemple existant": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter1": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Préfiltre IA",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OpenAI Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Code in JavaScript2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript1": {
+      "main": [
+        [
+          {
+            "node": "Filter1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code in JavaScript2": {
+      "main": [
+        [
+          {
+            "node": "Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "649ba175-26ff-4d87-b95d-39cbb66f8ef8",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "50b2f992c524180aa6447147f449684bf1834efc7ed0b661c2753869a23b4839"
+  },
+  "id": "RGWpwwg3HyLp8gR5",
+  "tags": []
+}
