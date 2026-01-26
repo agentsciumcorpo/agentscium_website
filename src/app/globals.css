@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+/* Design System Agentscium */
+:root {
+  /* Colors */
+  --luster-white: #F4F1EC;
+  --aster-blue: #9BACD8;
+  --habanero: #F98513;
+  --jodhpur-tan: #9AD1C8;
+  --deep-space: #223382;
+  --deadly-depths: #111144;
+
+  /* Semantic */
+  --background: var(--luster-white);
+  --foreground: var(--deadly-depths);
+  --primary: var(--habanero);
+  --secondary: var(--aster-blue);
+  --accent: var(--jodhpur-tan);
+}
+
+@theme inline {
+  --color-luster-white: var(--luster-white);
+  --color-aster-blue: var(--aster-blue);
+  --color-habanero: var(--habanero);
+  --color-jodhpur-tan: var(--jodhpur-tan);
+  --color-deep-space: var(--deep-space);
+  --color-deadly-depths: var(--deadly-depths);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-accent: var(--accent);
+}
+
+/* Font Display - Bebas Neue loaded via next/font/google */
+
+/* Base styles */
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display), 'Arial Black', Arial, sans-serif;
+  font-weight: 400;
+  line-height: 1.2;
+  color: var(--deep-space);
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--luster-white);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--aster-blue);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--deep-space);
+}
+
+/* Selection */
+::selection {
+  background: var(--habanero);
+  color: white;
+}
