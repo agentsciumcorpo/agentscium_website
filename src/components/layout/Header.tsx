@@ -41,9 +41,11 @@ export default function Header() {
         <nav className="flex items-center justify-between h-20">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
-            <div className="w-10 h-10 bg-gradient-to-br from-[#F98513] to-[#223382] rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-xl">A</span>
-            </div>
+            <img
+              src="/agentscium_logo.svg"
+              alt="Agentscium"
+              className="w-10 h-10"
+            />
             <span className="text-xl font-bold text-[#223382]">Agentscium</span>
           </Link>
 

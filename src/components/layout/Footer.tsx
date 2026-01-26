@@ -10,9 +10,11 @@ export default function Footer() {
           {/* Brand */}
           <div className="md:col-span-1">
             <Link href="/" className="flex items-center gap-2 mb-4">
-              <div className="w-10 h-10 bg-gradient-to-br from-[#F98513] to-[#9BACD8] rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">A</span>
-              </div>
+              <img
+                src="/agentscium_logo.svg"
+                alt="Agentscium"
+                className="w-10 h-10"
+              />
               <span className="text-xl font-bold">Agentscium</span>
             </Link>
             <p className="text-[#9BACD8] mb-6">
