@@ -1,0 +1,7 @@
+{
+  "slug": "reddit-research",
+  "title": "Reddit Research Automation (n8n)",
+  "description": "Scrape Reddit, filtre IA, RAG Supabase, envoi Gmail.",
+  "tags": ["n8n", "reddit", "scraping", "rag", "openai"],
+  "version": "1.0.0"
+}
