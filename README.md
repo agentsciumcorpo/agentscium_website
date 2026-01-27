@@ -1,3 +1,17 @@
+# Agentscium Website
+
+> **ATTENTION - REPO PUBLIC**
+>
+> Ce repository est **PUBLIC**. Ne jamais commiter :
+> - Cles API (OpenAI, Supabase, Google, etc.)
+> - Mots de passe ou tokens
+> - Fichiers `.env` ou credentials
+> - Informations clients sensibles
+>
+> Utilisez les **variables d'environnement Vercel** pour tout secret.
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started
