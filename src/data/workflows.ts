@@ -25,7 +25,142 @@ export interface Workflow {
 }
 
 export const workflows: Workflow[] = [
-  // Exemple de workflow - a remplacer par tes vrais workflows
+  {
+    slug: 'reddit-research',
+    title: 'Automatiser la recherche sur Reddit avec n8n + IA',
+    description: 'Scrape Reddit, filtre par IA, compare avec des exemples (RAG Supabase) et envoie les posts pertinents par email. Automatique, low-cost, sans intervention.',
+    content: `
+## Le probleme
+
+Vous passez des heures a scroller Reddit pour trouver des opportunites commerciales, des leads ou des discussions pertinentes pour votre activite ? Les posts interessants sont noyes dans le bruit, et vous n'avez pas le temps de surveiller ca tous les jours.
+
+**La solution** : un systeme automatique qui fait le tri pour vous. Low-cost, sans intervention manuelle, et qui tourne 24/7.
+
+---
+
+## Ce que fait ce workflow
+
+Concretement, le workflow fait tout :
+
+- Recupere les nouveaux posts d'un subreddit (sans API officielle Reddit)
+- Filtre par fraicheur (ex: posts < 2h)
+- Prefiltre IA "cheap" pour economiser des tokens
+- Compare a des exemples etiquetes (RAG avec Supabase)
+- Valide l'opportunite avec un LLM
+- Envoie les posts valides par email (Gmail)
+
+---
+
+## Les outils necessaires
+
+| Outil | Ce que ca fait | Prix |
+|-------|----------------|------|
+| **n8n** | Orchestration du workflow | Gratuit (self-hosted) ou cloud |
+| **Reddit (JSON public)** | Source des posts | Gratuit |
+| **OpenAI** | Prefiltre + decision finale | ~0.01$/execution |
+| **Supabase** | Base vectorielle pour les exemples | Gratuit (tier free) |
+| **Gmail** | Envoi des resultats | Gratuit |
+
+---
+
+## Importer le workflow dans n8n
+
+1. Telechargez le fichier JSON ci-dessus
+2. Ouvrez n8n (cloud ou self-hosted)
+3. Cliquez sur **"..."** en haut a droite → **"Import from file"**
+4. Selectionnez le fichier telecharge
+5. Tous les nodes doivent apparaitre connectes
+
+---
+
+## Connecter les credentials
+
+### OpenAI (2 nodes)
+1. Cliquez sur le node **"OpenAI Chat Model"**
+2. Dans "Credential", cliquez **"Create new"**
+3. Entrez votre API key OpenAI
+
+### Supabase (Vector Store)
+1. Cliquez sur le node **"Comparaison avec exemple existant"**
+2. Creez un nouveau credential Supabase
+3. Entrez votre **Project URL** et **API Key**
+
+### Gmail OAuth2
+1. Cliquez sur le node **"Send a message"**
+2. Creez un credential **Gmail OAuth2**
+3. Modifiez l'adresse email destinataire
+
+---
+
+## Comprendre le workflow
+
+### Bloc A - Scraping des posts
+
+Le workflow utilise l'endpoint JSON public de Reddit :
+\`https://www.reddit.com/r/personalfinance/new.json\`
+
+Pourquoi ? L'API officielle Reddit est payante. L'endpoint .json est gratuit et suffisant.
+
+### Bloc B - Filtre horaire
+
+On garde uniquement les posts publies dans les **2 dernieres heures**. Moins de bruit, opportunites plus chaudes.
+
+### Bloc C - Prefiltre IA
+
+Objectif : eliminer les posts hors-sujet AVANT les etapes couteuses. GPT-4.1-mini coute ~10x moins cher que GPT-4. En eliminant 60-80% des posts ici, vous economisez sur l'etape suivante.
+
+### Bloc D - RAG avec Supabase
+
+On recupere des exemples similaires (etiquetes OUI/NON) pour "caler" la decision du LLM final :
+1. Le post est converti en embedding
+2. Supabase retourne les 50 exemples les plus similaires
+3. On selectionne les 4 meilleurs (2 OUI + 2 NON)
+
+### Bloc E - Decision finale
+
+Le LLM recoit le post + les exemples et decide si c'est une opportunite. Si oui → email envoye avec le titre et le lien.
+
+---
+
+## Personnaliser le workflow
+
+### Changer de subreddit
+Dans le node **"Lecture_subreddit"**, modifiez l'URL :
+\`https://www.reddit.com/r/VOTRE_SUBREDDIT/new.json\`
+
+Exemples : /r/entrepreneur, /r/smallbusiness, /r/realestate
+
+### Modifier la fenetre de temps
+Dans **"Filtre horaire"**, changez \`{hours: 2}\` par la valeur souhaitee.
+
+### Remplacer Gmail
+Supprimez le node Gmail et connectez Slack, Notion, ou Google Sheets.
+
+---
+
+## Limites et bonnes pratiques
+
+- **Rate limits Reddit** : Ajoutez un delai entre les executions (minimum 5 min)
+- **Posts vides** : Certains posts n'ont pas de contenu, le workflow gere ce cas
+- **Couts OpenAI** : ~$0.08/jour pour 100 posts, soit ~$2.50/mois
+
+---
+
+## Resultat
+
+- **2-3h/jour** de veille economisees
+- **Leads qualifies** automatiquement
+- **~$3/mois** en couts API
+    `,
+    category: 'prospection',
+    categoryLabel: 'Prospection',
+    difficulty: 'intermediaire',
+    difficultyLabel: 'Intermediaire',
+    estimatedTime: '30 min',
+    tools: ['n8n', 'OpenAI', 'Supabase', 'Gmail'],
+    publishedAt: '2026-01-26',
+    downloadUrl: '/workflows/reddit-research.json',
+  },
   {
     slug: 'exemple-workflow-email-automation',
     title: 'Automatisation des relances email',
