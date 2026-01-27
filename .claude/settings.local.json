@@ -18,7 +18,9 @@
       "Bash(git show:*)",
       "Bash(git fetch:*)",
       "Bash(git grep:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "WebFetch(domain:agentscium-website-dsg1v80iq-agentsciumcorpos-projects.vercel.app)",
+      "Bash(git config:*)"
     ]
   }
 }
