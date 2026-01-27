@@ -12,7 +12,7 @@ export const colors = {
 export const navLinks = [
   { href: '/', label: 'Accueil' },
   { href: '/services', label: 'Services' },
-  { href: '/clients', label: 'Clients' },
+  // { href: '/clients', label: 'Clients' }, // Temporairement masqué
   { href: '/workflows', label: 'Workflows' },
   { href: '/blog', label: 'Blog' },
   { href: '/contact', label: 'Contact' },
@@ -25,7 +25,7 @@ export const footerLinks = {
     { href: '/services/systemes-ia', label: 'Systemes IA' },
   ],
   company: [
-    { href: '/clients', label: 'Etudes de cas' },
+    // { href: '/clients', label: 'Etudes de cas' }, // Temporairement masqué
     { href: '/workflows', label: 'Workflows n8n' },
     { href: '/blog', label: 'Blog' },
     { href: '/contact', label: 'Contact' },
