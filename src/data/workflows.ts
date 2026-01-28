@@ -197,65 +197,6 @@ Supprimez le node Gmail et connectez Slack, Notion, ou Google Sheets.
     publishedAt: '2026-01-26',
     downloadUrl: '/workflows/reddit-research.json',
   },
-  {
-    slug: 'exemple-workflow-email-automation',
-    title: 'Automatisation des relances email',
-    description: 'Un workflow n8n pour automatiser les relances email vers vos prospects qui n\'ont pas repondu.',
-    content: `
-## Description
-
-Ce workflow permet d'automatiser les relances email pour vos prospects qui n'ont pas repondu a votre premier email.
-
-## Comment ca marche
-
-1. **Declencheur** : Le workflow se declenche tous les jours a 9h
-2. **Lecture des prospects** : Recuperation des prospects sans reponse depuis Google Sheets
-3. **Filtrage** : Selection des prospects a relancer (dernier contact > 3 jours)
-4. **Envoi email** : Envoi d'un email de relance personnalise
-5. **Mise a jour** : Mise a jour du statut dans Google Sheets
-
-## Prerequis
-
-- Compte n8n (cloud ou self-hosted)
-- Compte Google avec acces Sheets
-- Compte email (Gmail, SMTP, ou autre)
-
-## Installation
-
-1. Telechargez le fichier JSON du workflow
-2. Dans n8n, allez dans "Workflows" > "Import from File"
-3. Selectionnez le fichier telecharge
-4. Configurez les credentials (Google Sheets, Email)
-5. Activez le workflow
-
-## Configuration
-
-### Google Sheets
-Votre feuille doit contenir les colonnes suivantes :
-- \`email\` : L'adresse email du prospect
-- \`prenom\` : Le prenom pour personnaliser l'email
-- \`dernier_contact\` : Date du dernier contact
-- \`statut\` : Statut actuel (nouveau, relance_1, relance_2, etc.)
-
-### Template Email
-Modifiez le noeud "Send Email" pour personnaliser votre message de relance.
-
-## Personnalisation
-
-Vous pouvez adapter ce workflow pour :
-- Changer la frequence des relances
-- Ajouter plus d'etapes de relance
-- Integrer avec votre CRM
-- Ajouter des conditions de filtrage
-    `,
-    category: 'prospection',
-    categoryLabel: 'Prospection',
-    difficulty: 'debutant',
-    difficultyLabel: 'Debutant',
-    estimatedTime: '15 min',
-    tools: ['n8n', 'Google Sheets', 'Gmail'],
-    publishedAt: '2026-01-20',
-  },
 ];
 
 export function getWorkflowBySlug(slug: string): Workflow | undefined {
