@@ -14,7 +14,7 @@ export const navLinks = [
   { href: '/services', label: 'Services' },
   // { href: '/clients', label: 'Clients' }, // Temporairement masqué
   { href: '/workflows', label: 'Workflows' },
-  { href: '/blog', label: 'Blog' },
+  // { href: '/blog', label: 'Blog' }, // Temporairement masqué
   { href: '/contact', label: 'Contact' },
 ] as const;
 
@@ -27,7 +27,7 @@ export const footerLinks = {
   company: [
     // { href: '/clients', label: 'Etudes de cas' }, // Temporairement masqué
     { href: '/workflows', label: 'Workflows n8n' },
-    { href: '/blog', label: 'Blog' },
+    // { href: '/blog', label: 'Blog' }, // Temporairement masqué
     { href: '/contact', label: 'Contact' },
   ],
   legal: [
