@@ -1,0 +1,299 @@
+{
+  "name": "Alimentation_RAG_REddit",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        80
+      ],
+      "id": "5d39c601-7fec-4c43-bb97-1995ef7aee38",
+      "name": "Schedule Trigger"
+    },
+    {
+      "parameters": {
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "appz1TFeBAnWPGjwy",
+          "mode": "list",
+          "cachedResultName": "Reddit_Data_Base",
+          "cachedResultUrl": "https://airtable.com/appz1TFeBAnWPGjwy"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblvAjR7NZEqAlIL0",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/appz1TFeBAnWPGjwy/tblvAjR7NZEqAlIL0"
+        },
+        "filterByFormula": "LAST_MODIFIED_TIME() > DATEADD(NOW(),-2,'day')",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtable",
+      "typeVersion": 2.1,
+      "position": [
+        224,
+        80
+      ],
+      "id": "e048607c-4b88-4243-8261-939818ead167",
+      "name": "Récupération de nouveau example",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "OiXtgnFVXnu396fM",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.splitInBatches",
+      "typeVersion": 3,
+      "position": [
+        448,
+        80
+      ],
+      "id": "39c4e00a-af56-4558-ae10-7f70123fae35",
+      "name": "Loop Over Items"
+    },
+    {
+      "parameters": {
+        "operation": "delete",
+        "tableId": "documents",
+        "filterType": "string",
+        "filterString": "=metadata->>id=eq.{{ $json.id }}"
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        672,
+        0
+      ],
+      "id": "e8ae34e1-38c3-4b29-a792-56e51232eed1",
+      "name": "Delete a row",
+      "alwaysOutputData": true,
+      "credentials": {
+        "supabaseApi": {
+          "id": "DmFHNwkmDaE6KtAt",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "insert",
+        "tableName": {
+          "__rl": true,
+          "value": "documents",
+          "mode": "list",
+          "cachedResultName": "documents"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreSupabase",
+      "typeVersion": 1.3,
+      "position": [
+        928,
+        80
+      ],
+      "id": "82468ca1-6592-47c0-a30a-164203f24716",
+      "name": "Supabase Vector Store",
+      "credentials": {
+        "supabaseApi": {
+          "id": "DmFHNwkmDaE6KtAt",
+          "name": "Supabase account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "text-embedding-3-large",
+        "options": {
+          "dimensions": 1024
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        896,
+        304
+      ],
+      "id": "e8af96d1-69ed-4843-9ede-5586d45eacd6",
+      "name": "Embeddings OpenAI",
+      "credentials": {
+        "openAiApi": {
+          "id": "SmWCIbgZskUwO0Ib",
+          "name": "OpenAi account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsonMode": "expressionData",
+        "jsonData": "=Titre :  {{ $('Récupération de nouveau example').item.json.Titre }}\n\nContenu : {{ $('Récupération de nouveau example').item.json.Contenu }}",
+        "textSplittingMode": "custom",
+        "options": {
+          "metadata": {
+            "metadataValues": [
+              {
+                "name": "id",
+                "value": "={{ $('Récupération de nouveau example').item.json.id }}"
+              },
+              {
+                "name": "createdTime ",
+                "value": "={{ $('Récupération de nouveau example').item.json.createdTime }}"
+              },
+              {
+                "name": "Titre",
+                "value": "={{ $('Récupération de nouveau example').item.json.Titre }}"
+              },
+              {
+                "name": "Contenu",
+                "value": "={{ $('Récupération de nouveau example').item.json.Contenu }}"
+              },
+              {
+                "name": "À répondre",
+                "value": "={{ $('Récupération de nouveau example').item.json['À répondre ?'] }}"
+              },
+              {
+                "name": "Explication",
+                "value": "={{ $('Récupération de nouveau example').item.json.Explication }}"
+              }
+            ]
+          }
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.documentDefaultDataLoader",
+      "typeVersion": 1.1,
+      "position": [
+        1024,
+        304
+      ],
+      "id": "25dbb41e-e8c5-4a3e-9cb5-e8deea03ae2c",
+      "name": "Default Data Loader"
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.textSplitterTokenSplitter",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        512
+      ],
+      "id": "0bea3a46-c5ab-4bab-909a-dd208903203f",
+      "name": "Token Splitter"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Récupération de nouveau example",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Récupération de nouveau example": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Loop Over Items": {
+      "main": [
+        [],
+        [
+          {
+            "node": "Delete a row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Delete a row": {
+      "main": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings OpenAI": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Default Data Loader": {
+      "ai_document": [
+        [
+          {
+            "node": "Supabase Vector Store",
+            "type": "ai_document",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Supabase Vector Store": {
+      "main": [
+        [
+          {
+            "node": "Loop Over Items",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token Splitter": {
+      "ai_textSplitter": [
+        [
+          {
+            "node": "Default Data Loader",
+            "type": "ai_textSplitter",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "d6e329d8-c9fa-4968-a778-eeae11adee95",
+  "meta": {
+    "instanceId": "50b2f992c524180aa6447147f449684bf1834efc7ed0b661c2753869a23b4839"
+  },
+  "id": "VCxIgQ2iRX4jCzxy",
+  "tags": []
+}

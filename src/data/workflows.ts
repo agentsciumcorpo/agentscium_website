@@ -59,6 +59,7 @@ Concretement, le workflow fait tout :
 | **Reddit (JSON public)** | Source des posts | Gratuit |
 | **OpenAI** | Prefiltre + decision finale | ~0.01$/execution |
 | **Supabase** | Base vectorielle pour les exemples | Gratuit (tier free) |
+| **Airtable** | Stockage des exemples etiquetes | Gratuit (tier free) |
 | **Gmail** | Envoi des resultats | Gratuit |
 
 ---
@@ -109,6 +110,41 @@ On garde uniquement les posts publies dans les **2 dernieres heures**. Moins de 
 
 Objectif : eliminer les posts hors-sujet AVANT les etapes couteuses. GPT-4.1-mini coute ~10x moins cher que GPT-4. En eliminant 60-80% des posts ici, vous economisez sur l'etape suivante.
 
+---
+
+## Workflow complementaire : Alimenter la base RAG
+
+Pour que le RAG fonctionne, il faut alimenter Supabase avec des exemples etiquetes (OUI/NON). Un second workflow s'en charge automatiquement.
+
+**[Telecharger le workflow d'alimentation RAG](/workflows/alimentation-rag-reddit.json)**
+
+### Comment ca marche
+
+1. **Airtable** : Vous stockez vos exemples dans une table avec les colonnes :
+   - \`Titre\` : Titre du post
+   - \`Contenu\` : Corps du post
+   - \`A repondre ?\` : "Oui" ou "Non"
+   - \`Explication\` : Pourquoi c'est oui/non
+
+2. **Schedule Trigger** : Le workflow se declenche automatiquement
+
+3. **Synchronisation** : Pour chaque exemple modifie dans les 2 derniers jours :
+   - Supprime l'ancienne version dans Supabase
+   - Genere l'embedding avec OpenAI (text-embedding-3-large)
+   - Insere le document dans Supabase Vector Store
+
+### Credentials necessaires
+
+- **Airtable** : Personal Access Token
+- **OpenAI** : API Key (pour les embeddings)
+- **Supabase** : Project URL + API Key
+
+### Astuce
+
+Commencez avec 10-20 exemples bien etiquetes. Plus vous ajoutez d'exemples varies, plus le RAG sera precis.
+
+---
+
 ### Bloc D - RAG avec Supabase
 
 On recupere des exemples similaires (etiquetes OUI/NON) pour "caler" la decision du LLM final :
@@ -157,7 +193,7 @@ Supprimez le node Gmail et connectez Slack, Notion, ou Google Sheets.
     difficulty: 'intermediaire',
     difficultyLabel: 'Intermediaire',
     estimatedTime: '30 min',
-    tools: ['n8n', 'OpenAI', 'Supabase', 'Gmail'],
+    tools: ['n8n', 'OpenAI', 'Supabase', 'Airtable', 'Gmail'],
     publishedAt: '2026-01-26',
     downloadUrl: '/workflows/reddit-research.json',
   },
